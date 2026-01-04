@@ -5,7 +5,7 @@ object ch6 {
 
   trait RNG:
     def nextInt: (Int, RNG)
-    
+
   def int: Rand[Int] = rng => rng.nextInt
 
   def unit[A](a: A): Rand[A] = rng => (a, rng)
@@ -20,21 +20,21 @@ object ch6 {
     rng =>
       val (a, nxtRng) = s(rng)
       (f(a), nxtRng)
-  
+
   def map2[A, B, C](ra: Rand[A])(rb: Rand[B])(f: (A, B) => C): Rand[C] =
     rng =>
       val (a, nxtRng) = ra(rng)
       val (b, nxtRng2) = rb(nxtRng)
       (f(a, b), nxtRng2)
-  
+
   def both[A, B](ra: Rand[A])(rb: Rand[B]): Rand[(A, B)] =
     map2(ra)(rb)((a, b) => (a, b))
-      
+
   def flatmap[A, B](s: Rand[A])(f: A => Rand[B]): Rand[B] =
     rng =>
       val (a, nxtRng) = s(rng)
       f(a)(nxtRng)
-  
+
   case class SimpleRng(seed: Long) extends RNG {
     override def nextInt: (Int, RNG) =
       val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
@@ -47,13 +47,13 @@ object ch6 {
     rng =>
       val (nxtInt, nxtRng) = rng.nextInt
       (if nxtInt < 0 then -(nxtInt + 1) else nxtInt, nxtRng)
-      
-  val double2: Rand[Double] = 
+
+  val double2: Rand[Double] =
     map(int)(nxtInt => nxtInt / (Int.MaxValue.toDouble + 1))
-    
+
   val randIntDouble: Rand[(Int, Double)] =
     both(int)(double2)
-  
+
   val randDoubleInt: Rand[(Double, Int)] =
     both(double2)(int)
 
@@ -79,6 +79,18 @@ object ch6 {
     val (nxtDouble3, nxtRng3) = double(nxtRng2)
     ((nxtDouble, nxtDouble2, nxtDouble3), nxtRng3)
 
+  def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rng => rs.foldRight((List.empty, rng))((action, acc) =>
+      val (result, rng2) = acc
+      val (a1, rng3) = action(rng2)
+      (a1 :: result, rng3)
+    )
+
+  def sequence2[A](rs: List[Rand[A]]): Rand[List[A]] =
+    rs.foldRight(unit(List.empty))((action, acc) =>
+      map2(acc)(action)((a, b) => b :: a)
+    )
+
   def ints(count: Int)(rng: RNG): (List[Int], RNG) = {
     if (count == 0) {
       val (nxtInt, nxtRng) = rng.nextInt
@@ -92,4 +104,4 @@ object ch6 {
 
 }
 
-// [ [1, 0, 1], [2, 1, 2]] => [1, 0, 1, 2, 1, 2] 
+// [ [1, 0, 1], [2, 1, 2]] => [1, 0, 1, 2, 1, 2]
