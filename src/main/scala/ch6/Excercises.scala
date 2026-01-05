@@ -14,7 +14,6 @@ object ch6 {
     Map is taking a state action (Rand which is RNG => (A, RNG)) which does some function
     (f: A => B) to create another state action. Instead of explicityly passing in RNG tediously,
     we are having the function accomplish creating/transfering a new state ( val (a, nxtRng) = s(rng) )
-
    */
   def map[A, B](s: Rand[A])(f: A => B): Rand[B] =
     rng =>
@@ -32,12 +31,12 @@ object ch6 {
 
   def flatmap[A, B](s: Rand[A])(f: A => Rand[B]): Rand[B] =
     rng =>
-      val (a, nxtRng) = s(rng)
+      val (a, nxtRng) = s(rng) // state operation to get current state
       f(a)(nxtRng)
 
   case class SimpleRng(seed: Long) extends RNG {
     override def nextInt: (Int, RNG) =
-      val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
+      val newSeed = (seed * 0x5deece66dL + 0xbL) & 0xffffffffffffL
       val nextRng = SimpleRng(newSeed)
       val n = (newSeed >>> 16).toInt
       (n, nextRng)
@@ -66,7 +65,7 @@ object ch6 {
 
   def intDouble(rng: RNG): ((Int, Double), RNG) =
     val (nxtInt, nxtRng) = rng.nextInt
-    val (nxtDouble,  nxtRng2) = double(nxtRng)
+    val (nxtDouble, nxtRng2) = double(nxtRng)
     ((nxtInt, nxtDouble), nxtRng2)
 
   def doubleInt(rng: RNG): ((Double, Int), RNG) =
@@ -80,11 +79,12 @@ object ch6 {
     ((nxtDouble, nxtDouble2, nxtDouble3), nxtRng3)
 
   def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
-    rng => rs.foldRight((List.empty, rng))((action, acc) =>
-      val (result, rng2) = acc
-      val (a1, rng3) = action(rng2)
-      (a1 :: result, rng3)
-    )
+    rng =>
+      rs.foldRight((List.empty, rng))((action, acc) =>
+        val (result, rng2) = acc
+        val (a1, rng3) = action(rng2)
+        (a1 :: result, rng3)
+      )
 
   def sequence2[A](rs: List[Rand[A]]): Rand[List[A]] =
     rs.foldRight(unit(List.empty))((action, acc) =>
@@ -102,5 +102,3 @@ object ch6 {
     }
   }
 }
-
-// [ [1, 0, 1], [2, 1, 2]] => [1, 0, 1, 2, 1, 2]
