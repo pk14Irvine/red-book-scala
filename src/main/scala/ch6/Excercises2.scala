@@ -64,7 +64,7 @@ object Excercises2 {
     val (numInt, nxtState) = nxtRng.nextInt
     (numInt :: intList, nxtState)
   }
-  
+
   def sequence[A](rs: List[Rand[A]]): Rand[List[A]] =
     def recur(rng: RNG, rs: List[Rand[A]], accum: List[A]): (List[A], RNG) =
       rs match
@@ -73,4 +73,9 @@ object Excercises2 {
           recur(state, tail, a :: accum)
         case _ => (accum, rng)
     rng => recur(rng, rs, List.empty[A])
+
+  def flatMap[A, B](action: Rand[A])(f: A => Rand[B]): Rand[B] =
+    rng =>
+      val (nxtVal, nxtState) = action(rng)
+      f(nxtVal)(nxtState)
 }
