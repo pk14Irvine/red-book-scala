@@ -101,4 +101,6 @@ object ch6 {
       (nxtInt :: nxtList, nxtRng2)
     }
   }
+  
+  
 }
