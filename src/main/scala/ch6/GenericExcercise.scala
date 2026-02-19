@@ -32,4 +32,7 @@ object GenericExcercise {
 
     def mapWFlatMap[B](f: A => B): State[S, B] =
       flatMap(a => unit(f(a)))
+
+    def map2WFlatMap[B, C](action2: State[S, B])(f: (A, B) => C): State[S, C] =
+      flatMap(a => action2.map(b => f(a, b)))
 }
