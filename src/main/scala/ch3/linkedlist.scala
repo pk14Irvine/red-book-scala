@@ -46,6 +46,13 @@ object List:
     case Nil => sys.error("init of empty list")
     case Cons(_, Nil) => Nil
     case Cons(hd, tl) => Cons(hd, init(tl))
+    
+  def foldRight[A, B](as: List[A], acc: B, f: (A, B) => B): B =
+    as match
+      case Nil => acc
+      case Cons(x, xs) => f(x, foldRight(xs, acc, f))
+
+  def length[A](as: List[A]): Int = 
 
 val exercise1 = List(1, 2, 3, 4, 5) match
   case Cons(x, Cons(2, Cons(4, _))) => x
